@@ -35,27 +35,33 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	getDom: function() {
-	  var self = this;
+	    var self = this;
 
-	  // create element wrapper for show into the module
-	  var wrapper = document.createElement("div");
-	  // If this.dataRequest is not empty
-	  if (this.dataRequest) {
-	    this.dataRequest.forEach(function(data, i) {
-	      var wrapperDataRequest = document.createElement("div");
+	    // create element wrapper for show into the module
+	    var wrapper = document.createElement("div");
 
-	      var line = data.MonitoredVehicleJourney.PublishedLineName;
-	      var destination = data.MonitoredVehicleJourney.DestinationName;
-	      var arrivalTime = data.MonitoredVehicleJourney.MonitoredCall.ArrivalProximityText;
+	    if (this.loaded && this.dataRequest) {
+		this.dataRequest.forEach(function(data, i) {
+		    if (data.line) {
+			var wrapperDataRequest = document.createElement("div");
+			wrapperDataRequest.innerHTML = 'Bus ' + data.line + ' to ' + data.destination + ' arriving ' + data.arrivalTime;
+			wrapperDataRequest.className = "small";
+			wrapper.appendChild(wrapperDataRequest);
+		    } else if (data.updateTimestamp) {
+			var wrapperTimestamp = document.createElement("div");
+			wrapperTimestamp.innerHTML = "Last Updated: " + self.formatTimeString(data.updateTimestamp);
+			wrapperTimestamp.className = "xsmall dimmed";
+			wrapper.appendChild(wrapperTimestamp);
+		    }
+		});
+	    } else {
+		var wrapperNoData = document.createElement("div");
+		wrapperNoData.innerHTML = this.loaded ? "No buses found." : "Loading buses ...";
+		wrapperNoData.className = "small dimmed";
+		wrapper.appendChild(wrapperNoData);
+	    }
 
-	      wrapperDataRequest.innerHTML = 'Bus ' + line + ' to ' + destination + ' arriving ' + arrivalTime;
-	      wrapperDataRequest.className = "small";
-
-	      wrapper.appendChild(wrapperDataRequest);
-	    });
-	  }
-
-	  return wrapper;
+	    return wrapper;
 	},
 
 
@@ -83,19 +89,49 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	processActionNextBus: function(response) {
-	  var self = this;
-	  if (response.data.Siri.ServiceDelivery.VehicleMonitoringDelivery) {
-	    var buses = response.data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity;
-	    var dataRequest = [];
-	    buses.forEach(function(bus) {
-	      dataRequest.push(bus);
+
+	    var result = [];
+
+	    var serviceDelivery = response.Siri.ServiceDelivery;
+	    var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
+
+	    //console.log(updateTimestampReference);
+
+	    // array of buses
+	    var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+	    var visitsCount = Math.min(visits.length, this.config.maxEntries);
+
+	    for (var i = 0; i < visitsCount; i++) {
+		var data = {};
+
+		var journey = visits[i].MonitoredVehicleJourney;
+		var line = journey.PublishedLineName[0];
+		var destination = journey.DestinationName[0];
+
+		if (destination.startsWith('LIMITED')) {
+		    line += ' LIMITED';
+		}
+
+		var monitoredCall = journey.MonitoredCall;
+		var arrivalTime = monitoredCall.ArrivalProximityText;
+
+		data.line = line;
+		data.destination = destination;
+		data.arrivalTime = arrivalTime;
+
+		result.push(data);
+	    }
+
+	    result.push({
+		updateTimestamp: updateTimestampReference
 	    });
-	    self.dataRequest = dataRequest;
-	    self.updateDom();
-	  } else {
-	    Log.info('Next Bus Error. No data.');
-	  }
+
+	    this.dataRequest = result;
+
+	    this.loaded = true;
+	    this.updateDom(this.config.animationSpeed);
 	},
+
 
 
 	getArrivalEstimateForDateString: function(dateString, refDate) {
