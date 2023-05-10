@@ -8,3 +8,29 @@
  * Custom here your css module
  *
  */
+
+.nextbus {
+    text-align: center;
+    padding: 10px;
+}
+
+.nextbus table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.nextbus table td {
+    padding: 5px 10px;
+    text-align: center;
+    border: 1px solid #777;
+}
+
+.nextbus table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.last-update {
+    margin-top: 10px;
+    text-align: right;
+}
