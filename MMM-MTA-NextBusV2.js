@@ -122,31 +122,15 @@ Module.register("MMM-MTA-NextBusV2", {
 
 		var mins = Math.floor((d - refDate) / 60 / 1000);
 
-		return mins + ' minute' + ((Math.abs(mins) === 1) ? '' : 's');
+		return mins + ' minute'
 	},
 
-	formatTimeString: function(date) {
-		var m = moment(date);
-
-		var hourSymbol = "HH";
-		var periodSymbol = "";
-
-		if (this.config.timeFormat !== 24) {
-			hourSymbol = "h";
-			periodSymbol = " A";
-		}
-
-		var format = hourSymbol + ":mm" + periodSymbol;
-
-		return m.format(format);
-	},
-
-	// socketNotificationReceived from helper
+	// This function is called when a socket notification arrives.
 	socketNotificationReceived: function(notification, payload) {
 		if (notification === "DATA") {
 			this.processData(payload);
 		} else if (notification === "ERROR") {
-			self.updateDom(self.config.animationSpeed);
+			this.updateDom(this.config.animationSpeed);
 		}
-	},
+	}
 });
