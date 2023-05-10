@@ -46,6 +46,10 @@ Module.register("MMM-MTA-NextBusV2", {
 				
 				wrapperDataRequest.innerHTML = data;
 				wrapperDataRequest.className = "small";
+				
+				if (data.startsWith('Last Updated: ')) {
+					wrapperDataRequest.classList.add('last-updated');
+				      }
 	
 				wrapper.appendChild(wrapperDataRequest);
 			});
