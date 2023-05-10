@@ -97,51 +97,41 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	processActionNextBus: function(response) {
+	  var result = [];
+	  var serviceDelivery = response.Siri.ServiceDelivery;
 
-		var result = [];
+	  // Get the current time from the response, as a reference for calculating time differences
+	  var responseTimestamp = new Date(serviceDelivery.ResponseTimestamp);
 
-		var serviceDelivery = response.Siri.ServiceDelivery;
-		var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
+	  // Iterate over the MonitoredStopVisit array
+	  var monitoredStopVisits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+	  for (var i = 0; i < monitoredStopVisits.length && i < this.config.maxEntries; i++) {
+	    var monitoredVehicleJourney = monitoredStopVisits[i].MonitoredVehicleJourney;
+	    var publishedLineName = monitoredVehicleJourney.PublishedLineName[0];
+	    var destinationName = monitoredVehicleJourney.DestinationName[0];
+	    var arrivalTime = monitoredVehicleJourney.MonitoredCall.ExpectedArrivalTime;
 
-		//console.log(updateTimestampReference);
+	    // Check if the expected arrival time is provided in the response
+	    if (arrivalTime) {
+	      // Calculate the time difference between the expected arrival time and the response timestamp, in minutes
+	      var arrivalTimeDiff = Math.floor((new Date(arrivalTime) - responseTimestamp) / 60000);
 
-		// array of buses
-		var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
-		var visitsCount = Math.min(visits.length, this.config.maxEntries);
+	      // Format the arrival time difference as a string, e.g. "2 minutes"
+	      var arrivalTimeStr = arrivalTimeDiff + " minute" + (arrivalTimeDiff === 1 ? "" : "s");
 
-		for (var i = 0; i < visitsCount; i++) {
-			r = '';
+	      // Build the result string for this stop
+	      var resultStr = publishedLineName + ", " + arrivalTimeStr + ", " + destinationName;
+	      result.push(resultStr);
+	    }
+	  }
 
-			var journey = visits[i].MonitoredVehicleJourney;
-			var line = journey.PublishedLineName[0];
+	  // Add the "last updated" string to the result array
+	  var lastUpdatedStr = "Last updated: " + this.formatTimeString(responseTimestamp);
+	  result.push(lastUpdatedStr);
 
-			var destinationName = journey.DestinationName[0];
-			if (destinationName.startsWith('LIMITED')) {
-				line += ' LIMITED';
-			}
-
-			r += line + ', ';
-
-			var monitoredCall = journey.MonitoredCall;
-			// var expectedArrivalTime = new Date(monitoredCall.ExpectedArrivalTime);
-			if (monitoredCall.ExpectedArrivalTime) {
-				var mins = this.getArrivalEstimateForDateString(monitoredCall.ExpectedArrivalTime, updateTimestampReference);
-				r += mins + ', ';
-			}
-
-
-			var distance = monitoredCall.ArrivalProximityText;
-			r += distance;
-
-			result.push(r);
-		}
-
-
-
-		result.push('Last Updated: ' + this.formatTimeString(updateTimestampReference));
-
-		return result;
+	  return result;
 	},
+
 
 	getArrivalEstimateForDateString: function(dateString, refDate) {
 		var d = new Date(dateString);
