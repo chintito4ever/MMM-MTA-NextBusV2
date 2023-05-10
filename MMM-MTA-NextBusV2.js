@@ -10,7 +10,7 @@
 Module.register("MMM-MTA-NextBusV2", {
 	defaults: {
 		timeFormat: config.timeFormat,
-		maxEntries: 5,
+		maxEntries: 3,
 		updateInterval: 60000,
 		retryDelay: 5000
 	},
