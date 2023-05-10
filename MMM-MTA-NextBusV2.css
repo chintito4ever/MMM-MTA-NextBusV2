@@ -30,7 +30,12 @@
     background-color: #f2f2f2;
 }
 
-.last-update {
+/* .last-update {
     margin-top: 10px;
     text-align: right;
+} */
+
+.last-updated {
+  font-size: small;
+  float: right;
 }
