@@ -133,6 +133,7 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 
+
 	getArrivalEstimateForDateString: function(dateString, refDate) {
 		var d = new Date(dateString);
 
