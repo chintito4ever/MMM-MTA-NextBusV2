@@ -7,7 +7,7 @@
  * MIT Licensed.
  */
 
-Module.register("MMM-MTA-NextBus", {
+Module.register("MMM-MTA-NextBusV2", {
 	defaults: {
 		timeFormat: config.timeFormat,
 		maxEntries: 5,
@@ -35,27 +35,39 @@ Module.register("MMM-MTA-NextBus", {
 	},	
 
 	getDom: function() {
-		var self = this;
+	var self = this;
 
-		// create element wrapper for show into the module
-		var wrapper = document.createElement("div");
-		// If this.dataRequest is not empty
-		if (this.dataRequest) {
-			this.dataRequest.forEach(function(data, i) {
-				var wrapperDataRequest = document.createElement("div");
-				
-				wrapperDataRequest.innerHTML = data;
-				wrapperDataRequest.className = "small";
+	// create element wrapper for show into the module
+	var wrapper = document.createElement("table");
+	wrapper.className = "small";
+
+	// If this.dataRequest is not empty
+	if (this.dataRequest) {
+		this.dataRequest.forEach(function(data, i) {
+			var row = document.createElement("tr");
+			var busCell = document.createElement("td");
+			var timeCell = document.createElement("td");
+			var distanceCell = document.createElement("td");
+
+			var busText = document.createTextNode(data.bus);
+			var timeText = document.createTextNode(data.time);
+			var distanceText = document.createTextNode(data.distance);
+
+			busCell.appendChild(busText);
+			timeCell.appendChild(timeText);
+			distanceCell.appendChild(distanceText);
+
+			row.appendChild(busCell);
+			row.appendChild(timeCell);
+			row.appendChild(distanceCell);
+
+			wrapper.appendChild(row);
+		});
+	}
 	
-				wrapper.appendChild(wrapperDataRequest);
-			});
-
-			
-		}
-		
-		return wrapper;
+	return wrapper;
 	},
-
+	
 	getScripts: function() {
 		return ["moment.js"];
 	},
