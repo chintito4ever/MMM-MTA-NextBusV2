@@ -9,7 +9,7 @@
  *
  */
 
-.nextbus {
+/* .nextbus {
     text-align: center;
     padding: 10px;
 }
@@ -28,12 +28,17 @@
 
 .nextbus table tr:nth-child(even) {
     background-color: #f2f2f2;
-}
+} */
 
 /* .last-update {
     margin-top: 10px;
     text-align: right;
 } */
+
+.small {
+  margin-bottom: 10px;
+}
+
 
 .last-updated {
   font-size: small;
