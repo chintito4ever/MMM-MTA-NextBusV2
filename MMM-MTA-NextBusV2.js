@@ -35,30 +35,57 @@ Module.register("MMM-MTA-NextBusV2", {
 	},	
 
 	getDom: function() {
-		var self = this;
+	var self = this;
 
-		// create element wrapper for show into the module
-		var wrapper = document.createElement("div");
-		// If this.dataRequest is not empty
-		if (this.dataRequest) {
-			this.dataRequest.forEach(function(data, i) {
-				var wrapperDataRequest = document.createElement("div");
-				
-				wrapperDataRequest.innerHTML = data;
-				wrapperDataRequest.className = "small";
-				
-				if (data.startsWith('Last Updated: ')) {
-					wrapperDataRequest.classList.add('last-updated');
-				      }
+	// create table element
+	var table = document.createElement("table");
+	table.className = "small";
+
+	// create table headers
+	var tableHeaderRow = document.createElement("tr");
+	var routeHeader = document.createElement("th");
+	routeHeader.innerHTML = "Bus Route";
+	var arrivalHeader = document.createElement("th");
+	arrivalHeader.innerHTML = "Arrival Time";
+	var distanceHeader = document.createElement("th");
+	distanceHeader.innerHTML = "Distance";
+	var stopsHeader = document.createElement("th");
+	stopsHeader.innerHTML = "Stops Away";
+	tableHeaderRow.appendChild(routeHeader);
+	tableHeaderRow.appendChild(arrivalHeader);
+	tableHeaderRow.appendChild(distanceHeader);
+	tableHeaderRow.appendChild(stopsHeader);
+	table.appendChild(tableHeaderRow);
+
+	// If this.dataRequest is not empty
+	if (this.dataRequest) {
+		this.dataRequest.forEach(function(data, i) {
+			if (data.startsWith('Last Updated: ')) {
+				// create row for last updated time
+				var lastUpdatedRow = document.createElement("tr");
+				var lastUpdatedCell = document.createElement("td");
+				lastUpdatedCell.setAttribute("colspan", "4");
+				lastUpdatedCell.innerHTML = data;
+				lastUpdatedCell.classList.add('last-updated');
+				lastUpdatedRow.appendChild(lastUpdatedCell);
+				table.appendChild(lastUpdatedRow);
+			} else {
+				// create row for bus data
+				var busRow = document.createElement("tr");
+				var busData = data.split(", ");
+				for (var j = 0; j < busData.length; j++) {
+					var busCell = document.createElement("td");
+					busCell.innerHTML = busData[j];
+					busRow.appendChild(busCell);
+				}
+				table.appendChild(busRow);
+			}
+		});
+	}
 	
-				wrapper.appendChild(wrapperDataRequest);
-			});
-
-			
-		}
-		
-		return wrapper;
+	return table;
 	},
+
 
 	getScripts: function() {
 		return ["moment.js"];
