@@ -44,7 +44,7 @@ Module.register("MMM-MTA-NextBusV2", {
 		this.dataRequest.forEach(function(data, i) {
 		    if (data.line) {
 			var wrapperDataRequest = document.createElement("div");
-			wrapperDataRequest.innerHTML = 'Bus ' + data.line + ' to ' + data.destination + ' arriving ' + data.arrivalTime;
+			wrapperDataRequest.innerHTML = 'Bus ' + data.PublishedLineName + ' to ' + data.DestinationName + ' arriving ' + self.getMinutesUntilArrival(data.ExpectedArrivalTime);
 			wrapperDataRequest.className = "small";
 			wrapper.appendChild(wrapperDataRequest);
 		    } else if (data.updateTimestamp) {
