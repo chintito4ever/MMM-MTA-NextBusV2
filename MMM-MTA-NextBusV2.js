@@ -160,10 +160,12 @@ Module.register("MMM-MTA-NextBusV2", {
 
 	// socketNotificationReceived from helper
 	socketNotificationReceived: function(notification, payload) {
-		if (notification === "DATA") {
-			this.processData(payload);
-		} else if (notification === "ERROR") {
-			self.updateDom(self.config.animationSpeed);
-		}
+	    if (notification === "DATA") {
+		console.log(payload); // Add this line
+		this.processData(payload);
+	    } else if (notification === "ERROR") {
+		self.updateDom(self.config.animationSpeed);
+	    }
 	},
+
 });
