@@ -1,8 +1,8 @@
 {
-  "name": "MMM-MTA-NextBus",
+  "name": "MMM-MTA-NextBusV2",
   "version": "1.0.0",
   "description": "Todo: Insert description here!",
-  "main": "MMM-MTA-NextBus.js",
+  "main": "MMM-MTA-NextBusV2.js",
   "author": "",
   "license": "MIT",
   "devDependencies": {
