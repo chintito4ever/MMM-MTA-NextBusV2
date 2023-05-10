@@ -112,8 +112,8 @@ Module.register("MMM-MTA-NextBusV2", {
 			}
 			
 			
-			var distance = monitoredCall.ArrivalProximityText;
-			r += distance;
+			var stopsAway = journey.MonitoredCall.Extensions.Distances.StopsFromCall;
+			r += stopsAway + ' stop' + ((Math.abs(stopsAway) === 1) ? ' ' : 's ') + 'away, ';
 
 			result.push(r);
 		}
