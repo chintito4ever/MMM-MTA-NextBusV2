@@ -35,44 +35,37 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	getDom: function() {
-		var wrapper = document.createElement("div");
-		wrapper.className = "nextbus";
+	    var wrapper = document.createElement("div");
+	    wrapper.className = "nextbus";
 
-		if (!this.dataRequest) {
-			wrapper.innerHTML = "Loading...";
-			return wrapper;
-		}
-
-		var table = document.createElement("table");
-		table.className = "small";
-
-		this.dataRequest.forEach(function(bus) {
-			var tr = document.createElement("tr");
-
-			var tdLine = document.createElement("td");
-			tdLine.innerHTML = bus.line;
-			tr.appendChild(tdLine);
-
-			var tdTime = document.createElement("td");
-			tdTime.innerHTML = bus.time;
-			tr.appendChild(tdTime);
-
-			var tdDistance = document.createElement("td");
-			tdDistance.innerHTML = bus.distance;
-			tr.appendChild(tdDistance);
-
-			table.appendChild(tr);
-		});
-
-		wrapper.appendChild(table);
-
-		var lastUpdate = document.createElement("div");
-		lastUpdate.innerHTML = "Last Updated: " + this.formatTimeString(this.lastUpdate);
-		lastUpdate.className = "xsmall last-update";
-		wrapper.appendChild(lastUpdate);
-
+	    if (!this.dataRequest) {
+		wrapper.innerHTML = "Loading...";
 		return wrapper;
+	    }
+
+	    var table = document.createElement("table");
+	    table.className = "small";
+
+	    this.dataRequest.forEach(function(bus) {
+		var tr = document.createElement("tr");
+
+		var tdLine = document.createElement("td");
+		tdLine.innerHTML = bus;
+		tr.appendChild(tdLine);
+
+		table.appendChild(tr);
+	    });
+
+	    wrapper.appendChild(table);
+
+	    var lastUpdate = document.createElement("div");
+	    lastUpdate.innerHTML = "Last Updated: " + this.formatTimeString(this.lastUpdate);
+	    lastUpdate.className = "xsmall last-update";
+	    wrapper.appendChild(lastUpdate);
+
+	    return wrapper;
 	},
+
 
 	getScripts: function() {
 		return ["moment.js"];
@@ -97,51 +90,32 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	processActionNextBus: function(response) {
+	    var result = [];
 
-		var result = [];
+	    var serviceDelivery = response.Siri.ServiceDelivery;
+	    var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
 
-		var serviceDelivery = response.Siri.ServiceDelivery;
-		var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
+	    // array of buses
+	    var monitoredStopVisit = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
 
-		//console.log(updateTimestampReference);
+	    for (var i = 0; i < monitoredStopVisit.length && i < this.config.maxEntries; i++) {
+		var journey = monitoredStopVisit[i].MonitoredVehicleJourney;
 
-		// array of buses
-		var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
-		var visitsCount = Math.min(visits.length, this.config.maxEntries);
+		var line = journey.PublishedLineName[0];
+		var destinationName = journey.DestinationName[0];
 
-		for (var i = 0; i < visitsCount; i++) {
-			r = '';
+		var monitoredCall = journey.MonitoredCall;
+		var distance = monitoredCall.ArrivalProximityText;
 
-			var journey = visits[i].MonitoredVehicleJourney;
-			var line = journey.PublishedLineName[0];
+		var r = line + " to " + destinationName + ", " + distance;
+		result.push(r);
+	    }
 
-			var destinationName = journey.DestinationName[0];
-			if (destinationName.startsWith('LIMITED')) {
-				line += ' LIMITED';
-			}
+	    result.push('Last Updated: ' + this.formatTimeString(updateTimestampReference));
 
-			r += line + ', ';
-
-			var monitoredCall = journey.MonitoredCall;
-			// var expectedArrivalTime = new Date(monitoredCall.ExpectedArrivalTime);
-			if (monitoredCall.ExpectedArrivalTime) {
-				var mins = this.getArrivalEstimateForDateString(monitoredCall.ExpectedArrivalTime, updateTimestampReference);
-				r += mins + ', ';
-			}
-
-
-			var distance = monitoredCall.ArrivalProximityText;
-			r += distance;
-
-			result.push(r);
-		}
-
-
-
-		result.push('Last Updated: ' + this.formatTimeString(updateTimestampReference));
-
-		return result;
+	    return result;
 	},
+
 
 	getArrivalEstimateForDateString: function(dateString, refDate) {
 		var d = new Date(dateString);
