@@ -7,7 +7,7 @@
  * MIT Licensed.
  */
 
-Module.register("MMM-MTA-NextBus", {
+Module.register("MMM-MTA-NextBusV2", {
 	defaults: {
 		timeFormat: config.timeFormat,
 		maxEntries: 5,
@@ -62,7 +62,7 @@ Module.register("MMM-MTA-NextBus", {
 
 	getStyles: function () {
 		return [
-			"MMM-MTA-NextBus.css",
+			"MMM-MTA-NextBusV2.css",
 		];
 	},
 
