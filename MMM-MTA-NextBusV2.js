@@ -8,115 +8,149 @@
  */
 
 Module.register("MMM-MTA-NextBusV2", {
-  defaults: {
-    timeFormat: config.timeFormat,
-    maxEntries: 5,
-    updateInterval: 60000,
-    retryDelay: 5000
-  },
+	defaults: {
+		timeFormat: config.timeFormat,
+		maxEntries: 5,
+		updateInterval: 60000,
+		retryDelay: 5000
+	},
 
-  requiresVersion: "2.1.0", // Required version of MagicMirror
+	requiresVersion: "2.1.0", // Required version of MagicMirror
 
-  start: function () {
-    var self = this;
-    this.dataRequest = [];
-    this.sendSocketNotification("CONFIG", this.config);
+	start: function() {
+		var self = this;
+		var dataRequest = null;
+		var dataNotification = null;
 
-    // Schedule update timer.
-    setInterval(function () {
-      self.sendSocketNotification("GET_DATA");
-    }, this.config.updateInterval);
-  },
+		//Flag for check if module is loaded
+		//this.loaded = false;
+		console.log(this.config.timeFormat);
+		this.sendSocketNotification("CONFIG", this.config);
 
-  getDom: function () {
-    var self = this;
+		// Schedule update timer.
+		setInterval(function() {
+			self.sendSocketNotification("GET_DATA");
+		}, this.config.updateInterval);
 
-    // create element wrapper for show into the module
-    var wrapper = document.createElement("table");
-    wrapper.className = "small";
+	},
 
-    // If this.dataRequest is not empty
-    if (this.dataRequest) {
-      this.dataRequest.forEach(function (data, i) {
-        var row = document.createElement("tr");
-        var busCell = document.createElement("td");
-        var timeCell = document.createElement("td");
-        var distanceCell = document.createElement("td");
+	getDom: function() {
+		var wrapper = document.createElement("div");
+		wrapper.className = "nextbus";
 
-        var busText = document.createTextNode(data.bus);
-        var timeText = document.createTextNode(data.time);
-        var distanceText = document.createTextNode(data.distance);
+		if (!this.dataRequest) {
+			wrapper.innerHTML = "Loading...";
+			return wrapper;
+		}
 
-        busCell.appendChild(busText);
-        timeCell.appendChild(timeText);
-        distanceCell.appendChild(distanceText);
+		var table = document.createElement("table");
+		table.className = "small";
 
-        row.appendChild(busCell);
-        row.appendChild(timeCell);
-        row.appendChild(distanceCell);
+		this.dataRequest.forEach(function(bus) {
+			var tr = document.createElement("tr");
 
-        wrapper.appendChild(row);
-      });
-    }
+			var tdLine = document.createElement("td");
+			tdLine.innerHTML = bus.line;
+			tr.appendChild(tdLine);
 
-    return wrapper;
-  },
+			var tdTime = document.createElement("td");
+			tdTime.innerHTML = bus.time;
+			tr.appendChild(tdTime);
 
-  getScripts: function () {
-    return ["moment.js"];
-  },
+			var tdDistance = document.createElement("td");
+			tdDistance.innerHTML = bus.distance;
+			tr.appendChild(tdDistance);
 
-  getStyles: function () {
-    return ["MMM-MTA-NextBusV2.css"];
-  },
+			table.appendChild(tr);
+		});
 
-  processData: function (data) {
-    var self = this;
-    this.dataRequest = self.processActionNextBus(data);
-    self.updateDom(self.config.animationSpeed);
-  },
+		wrapper.appendChild(table);
 
-  processActionNextBus: function (response) {
-    var result = [];
-    var serviceDelivery = response.Siri.ServiceDelivery;
-    var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
+		var lastUpdate = document.createElement("div");
+		lastUpdate.innerHTML = "Last Updated: " + this.formatTimeString(this.lastUpdate);
+		lastUpdate.className = "xsmall last-update";
+		wrapper.appendChild(lastUpdate);
 
-    var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
-    var visitsCount = Math.min(visits.length, this.config.maxEntries);
+		return wrapper;
+	},
 
-    for (var i = 0; i < visitsCount; i++) {
-      var r = {};
+	getScripts: function() {
+		return ["moment.js"];
+	},
 
-      var journey = visits[i].MonitoredVehicleJourney;
-      var line = journey.PublishedLineName[0];
+	getStyles: function() {
+		return [
+			"MMM-MTA-NextBusV2.css",
+		];
+	},
 
-      var destinationName = journey.DestinationName[0];
-      if (destinationName.startsWith("LIMITED")) {
-        line += " LIMITED";
-      }
+	processData: function(data) {
+		var self = this;
+		this.dataRequest = self.processActionNextBus(data);
+		self.updateDom(self.config.animationSpeed);
+		//if (this.loaded === false) {  ; }
+		//this.loaded = true;
 
-      r.bus = line;
+		// the data if load
+		// send notification to helper
+		//this.sendSocketNotification("MMM-MTA-NextBus-NOTIFICATION_TEST", data);
+	},
 
-      var monitoredCall = journey.MonitoredCall;
-      if (monitoredCall.ExpectedArrivalTime) {
-        r.time = this.getArrivalEstimateForDateString(monitoredCall.ExpectedArrivalTime, updateTimestampReference);
-      }
+	processActionNextBus: function(response) {
 
-      r.distance = monitoredCall.ArrivalProximityText;
+		var result = [];
 
-      result.push(r);
-    }
+		var serviceDelivery = response.Siri.ServiceDelivery;
+		var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
 
-    result.push({ updateTime: this.formatTimeString(updateTimestampReference) });
+		//console.log(updateTimestampReference);
 
-    return result;
-  },
+		// array of buses
+		var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+		var visitsCount = Math.min(visits.length, this.config.maxEntries);
 
-  getArrivalEstimateForDateString: function (dateString, refDate) {
-    var d = new Date(dateString);
-    var mins = Math.floor((d - refDate) / 60 / 1000);
-    return mins + " minute" + (Math.abs(mins) === 1 ? "" : "s");
-  },
+		for (var i = 0; i < visitsCount; i++) {
+			r = '';
+
+			var journey = visits[i].MonitoredVehicleJourney;
+			var line = journey.PublishedLineName[0];
+
+			var destinationName = journey.DestinationName[0];
+			if (destinationName.startsWith('LIMITED')) {
+				line += ' LIMITED';
+			}
+
+			r += line + ', ';
+
+			var monitoredCall = journey.MonitoredCall;
+			// var expectedArrivalTime = new Date(monitoredCall.ExpectedArrivalTime);
+			if (monitoredCall.ExpectedArrivalTime) {
+				var mins = this.getArrivalEstimateForDateString(monitoredCall.ExpectedArrivalTime, updateTimestampReference);
+				r += mins + ', ';
+			}
+
+
+			var distance = monitoredCall.ArrivalProximityText;
+			r += distance;
+
+			result.push(r);
+		}
+
+
+
+		result.push('Last Updated: ' + this.formatTimeString(updateTimestampReference));
+
+		return result;
+	},
+
+	getArrivalEstimateForDateString: function(dateString, refDate) {
+		var d = new Date(dateString);
+
+		var mins = Math.floor((d - refDate) / 60 / 1000);
+
+		return mins + ' minute' + ((Math.abs(mins) === 1) ? '' : 's');
+	},
+
 	formatTimeString: function(date) {
 		var m = moment(date);
 
@@ -134,27 +168,11 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	// socketNotificationReceived from helper
-	socketNotificationReceived: function (notification, payload) {
+	socketNotificationReceived: function(notification, payload) {
 		if (notification === "DATA") {
 			this.processData(payload);
 		} else if (notification === "ERROR") {
 			self.updateDom(self.config.animationSpeed);
-		} 
-	},
-
-	notificationReceived: function(notification, payload, sender) {
-		if (notification === "DOM_OBJECTS_CREATED") {
-			// Do any DOM manipulation here.
-			// This is triggered when the module has been
-			// initialized and the DOM is ready.
 		}
 	},
-
-	// Load translations files
-	getTranslations: function() {
-		return {
-			en: "translations/en.json",
-			es: "translations/es.json"
-		};
-	}
 });
