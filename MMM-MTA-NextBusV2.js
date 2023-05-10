@@ -50,7 +50,7 @@ Module.register("MMM-MTA-NextBusV2", {
 	var distanceHeader = document.createElement("th");
 	distanceHeader.innerHTML = "Distance";
 	var stopsHeader = document.createElement("th");
-	stopsHeader.innerHTML = "Stops Away";
+	stopsHeader.innerHTML = "Stops";
 	tableHeaderRow.appendChild(routeHeader);
 	tableHeaderRow.appendChild(arrivalHeader);
 	tableHeaderRow.appendChild(distanceHeader);
@@ -75,7 +75,12 @@ Module.register("MMM-MTA-NextBusV2", {
 				var busData = data.split(", ");
 				for (var j = 0; j < busData.length; j++) {
 					var busCell = document.createElement("td");
-					busCell.innerHTML = busData[j];
+					var busDataSplit = busData[j].split(" ");
+					if (busDataSplit.length === 3 && busDataSplit[2] === "away") {
+						busCell.innerHTML = busDataSplit[0] + " " + busDataSplit[1];
+					} else {
+						busCell.innerHTML = busData[j];
+					}
 					busRow.appendChild(busCell);
 				}
 				table.appendChild(busRow);
@@ -85,6 +90,7 @@ Module.register("MMM-MTA-NextBusV2", {
 	
 	return table;
 	},
+
 
 
 	getScripts: function() {
