@@ -50,8 +50,16 @@ Module.register("MMM-MTA-NextBusV2", {
 		var tr = document.createElement("tr");
 
 		var tdLine = document.createElement("td");
-		tdLine.innerHTML = bus;
+		tdLine.innerHTML = bus.lineRef;
 		tr.appendChild(tdLine);
+
+		var tdDirection = document.createElement("td");
+		tdDirection.innerHTML = bus.directionRef;
+		tr.appendChild(tdDirection);
+
+		var tdDistance = document.createElement("td");
+		tdDistance.innerHTML = bus.distanceFromStop;
+		tr.appendChild(tdDistance);
 
 		table.appendChild(tr);
 	    });
