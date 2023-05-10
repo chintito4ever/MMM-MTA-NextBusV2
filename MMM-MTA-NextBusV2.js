@@ -35,36 +35,44 @@ Module.register("MMM-MTA-NextBusV2", {
 	},
 
 	getDom: function() {
-	    var self = this;
+	  var wrapper = document.createElement("div");
+	  wrapper.className = "nextbus";
 
-	    // create element wrapper for show into the module
-	    var wrapper = document.createElement("div");
-
-	    if (this.loaded && this.dataRequest) {
-		this.dataRequest.forEach(function(data, i) {
-		    if (data.line) {
-			var wrapperDataRequest = document.createElement("div");
-			wrapperDataRequest.innerHTML = 'Bus ' + data.PublishedLineName + ' to ' + data.DestinationName + ' arriving ' + self.getArrivalEstimateForDateString(data.ExpectedArrivalTime);
-			wrapperDataRequest.className = "small";
-			wrapper.appendChild(wrapperDataRequest);
-		    } else if (data.updateTimestamp) {
-			var wrapperTimestamp = document.createElement("div");
-			wrapperTimestamp.innerHTML = "Last Updated: " + self.formatTimeString(data.updateTimestamp);
-			wrapperTimestamp.className = "xsmall dimmed";
-			wrapper.appendChild(wrapperTimestamp);
-		    }
-		});
-	    } else {
-		var wrapperNoData = document.createElement("div");
-		wrapperNoData.innerHTML = this.loaded ? "No buses found." : "Loading buses ...";
-		wrapperNoData.className = "small dimmed";
-		wrapper.appendChild(wrapperNoData);
-	    }
-
+	  if (!this.dataRequest) {
+	    wrapper.innerHTML = "Loading...";
 	    return wrapper;
+	  }
+
+	  var table = document.createElement("table");
+	  table.className = "small";
+
+	  this.dataRequest.forEach(function(bus) {
+	    var tr = document.createElement("tr");
+
+	    var tdLine = document.createElement("td");
+	    tdLine.innerHTML = bus.PublishedLineName;
+	    tr.appendChild(tdLine);
+
+	    var tdDest = document.createElement("td");
+	    tdDest.innerHTML = bus.DestinationName;
+	    tr.appendChild(tdDest);
+
+	    var tdTime = document.createElement("td");
+	    tdTime.innerHTML = bus.ExpectedArrivalTime;
+	    tr.appendChild(tdTime);
+
+	    table.appendChild(tr);
+	  });
+
+	  wrapper.appendChild(table);
+
+	  var lastUpdate = document.createElement("div");
+	  lastUpdate.innerHTML = "Last Updated: " + this.formatTimeString(this.lastUpdate);
+	  lastUpdate.className = "xsmall last-update";
+	  wrapper.appendChild(lastUpdate);
+
+	  return wrapper;
 	},
-
-
 
 	getScripts: function() {
 		return ["moment.js"];
@@ -90,64 +98,81 @@ Module.register("MMM-MTA-NextBusV2", {
 
 	processActionNextBus: function(response) {
 
-	    var result = [];
+		var result = [];
 
-	    var serviceDelivery = response.Siri.ServiceDelivery;
-	    var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
+		var serviceDelivery = response.Siri.ServiceDelivery;
+		var updateTimestampReference = new Date(serviceDelivery.ResponseTimestamp);
 
-	    //console.log(updateTimestampReference);
+		//console.log(updateTimestampReference);
 
-	    // array of buses
-	    var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
-	    var visitsCount = Math.min(visits.length, this.config.maxEntries);
+		// array of buses
+		var visits = serviceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+		var visitsCount = Math.min(visits.length, this.config.maxEntries);
 
-	    for (var i = 0; i < visitsCount; i++) {
-		var data = {};
+		for (var i = 0; i < visitsCount; i++) {
+			r = '';
 
-		var journey = visits[i].MonitoredVehicleJourney;
-		var line = journey.PublishedLineName[0];
-		var destination = journey.DestinationName[0];
+			var journey = visits[i].MonitoredVehicleJourney;
+			var line = journey.PublishedLineName[0];
 
-		if (destination.startsWith('LIMITED')) {
-		    line += ' LIMITED';
+			var destinationName = journey.DestinationName[0];
+			if (destinationName.startsWith('LIMITED')) {
+				line += ' LIMITED';
+			}
+
+			r += line + ', ';
+
+			var monitoredCall = journey.MonitoredCall;
+			// var expectedArrivalTime = new Date(monitoredCall.ExpectedArrivalTime);
+			if (monitoredCall.ExpectedArrivalTime) {
+				var mins = this.getArrivalEstimateForDateString(monitoredCall.ExpectedArrivalTime, updateTimestampReference);
+				r += mins + ', ';
+			}
+
+
+			var distance = monitoredCall.ArrivalProximityText;
+			r += distance;
+
+			result.push(r);
 		}
 
-		var monitoredCall = journey.MonitoredCall;
-		var arrivalTime = monitoredCall.ArrivalProximityText;
 
-		data.line = line;
-		data.destination = destination;
-		data.arrivalTime = arrivalTime;
 
-		result.push(data);
-	    }
+		result.push('Last Updated: ' + this.formatTimeString(updateTimestampReference));
 
-	    result.push({
-		updateTimestamp: updateTimestampReference
-	    });
-
-	    this.dataRequest = result;
-
-	    this.loaded = true;
-	    this.updateDom(this.config.animationSpeed);
+		return result;
 	},
-
-
 
 	getArrivalEstimateForDateString: function(dateString, refDate) {
 		var d = new Date(dateString);
 
 		var mins = Math.floor((d - refDate) / 60 / 1000);
 
-		return mins + ' minute'
+		return mins + ' minute' + ((Math.abs(mins) === 1) ? '' : 's');
 	},
 
-	// This function is called when a socket notification arrives.
+	formatTimeString: function(date) {
+		var m = moment(date);
+
+		var hourSymbol = "HH";
+		var periodSymbol = "";
+
+		if (this.config.timeFormat !== 24) {
+			hourSymbol = "h";
+			periodSymbol = " A";
+		}
+
+		var format = hourSymbol + ":mm" + periodSymbol;
+
+		return m.format(format);
+	},
+
+	// socketNotificationReceived from helper
 	socketNotificationReceived: function(notification, payload) {
 		if (notification === "DATA") {
 			this.processData(payload);
 		} else if (notification === "ERROR") {
-			this.updateDom(this.config.animationSpeed);
+			self.updateDom(self.config.animationSpeed);
 		}
-	}
+	},
 });
