@@ -128,7 +128,7 @@ Module.register("MMM-MTA-NextBusV2", {
 		    	"table.small .last-updated { font-style: italic; }",
 		    	"table.small .arrival-time { color: #00bfff; }",
 		    	"table.small .distance { color: #ff7f50; }",
-		    	"table.small .stops-away { color: #1e90ff; }"
+		    	"table.small .stops-away { color: #1e90ff; }",
 		];
 	},
 
