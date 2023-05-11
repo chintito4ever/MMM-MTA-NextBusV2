@@ -58,26 +58,6 @@ Module.register("MMM-MTA-NextBusV2", {
 	table.appendChild(tableHeaderRow);
 		
 		
-	var routeCell = document.createElement("td");
-	routeCell.innerHTML = route;
-	busRow.appendChild(routeCell);
-
-	var arrivalCell = document.createElement("td");
-	arrivalCell.innerHTML = arrival;
-	arrivalCell.classList.add("arrival-time"); // add class to apply color style
-	busRow.appendChild(arrivalCell);
-
-	var distanceCell = document.createElement("td");
-	distanceCell.innerHTML = distance;
-	distanceCell.classList.add("distance"); // add class to apply color style
-	busRow.appendChild(distanceCell);
-
-	var stopsCell = document.createElement("td");
-	stopsCell.innerHTML = stops;
-	stopsCell.classList.add("stops-away"); // add class to apply color style
-	busRow.appendChild(stopsCell);
-
-
 	// If this.dataRequest is not empty
 	if (this.dataRequest) {
 		this.dataRequest.forEach(function(data, i) {
@@ -121,14 +101,7 @@ Module.register("MMM-MTA-NextBusV2", {
 	getStyles: function () {
 		return [
 			"MMM-MTA-NextBusV2.css",
-			
-			"table.small { color: #333; font-size: 16px; }",
-		    	"table.small th { background-color: #555; color: #fff; padding: 5px 10px; text-align: left; }",
-		    	"table.small td { padding: 5px 10px; }",
-		    	"table.small .last-updated { font-style: italic; }",
-		    	"table.small .arrival-time { color: #00bfff; }",
-		    	"table.small .distance { color: #ff7f50; }",
-		    	"table.small .stops-away { color: #1e90ff; }",
+
 		];
 	},
 
